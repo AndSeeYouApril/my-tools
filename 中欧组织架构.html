@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>组织架构人员分布</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #f8fafc;
+    padding: 20px;
+    color: #334155;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .total-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 12px;
+    border: 1px solid #bae6fd;
+  }
+  .total-header h1 {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    letter-spacing: 2px;
+  }
+  .total-header .big-num {
+    font-size: 42px;
+    font-weight: 800;
+    color: #0c4a6e;
+    margin-top: 4px;
+  }
+  .total-header .sub {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+
+  .pie-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .pie-card {
+    flex: 1;
+    min-width: 320px;
+    max-width: 420px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    text-align: center;
+  }
+  .pie-card h3 {
+    font-size: 15px;
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .pie-card .hint {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+  .pie-card svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .line-card {
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  }
+  .line-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .line-header:hover { background: #f8fafc; }
+  .line-left { display: flex; align-items: center; gap: 10px; }
+  .line-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .line-name { font-size: 14px; font-weight: 600; color: #1e293b; }
+  .line-count { font-size: 16px; font-weight: 700; color: #334155; }
+  .line-pct { font-size: 11px; color: #94a3b8; margin-left: 6px; }
+  .arrow { font-size: 11px; color: #94a3b8; transition: transform 0.2s; margin-left: 8px; }
+  .arrow.open { transform: rotate(90deg); }
+
+  .line-bar-bg {
+    height: 3px;
+    background: #f1f5f9;
+    margin: 0 18px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .line-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+  .dept-list {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .dept-list.open { max-height: 500px; }
+  .dept-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px 10px 38px;
+    border-top: 1px solid #f8fafc;
+    font-size: 12px;
+  }
+  .dept-name { color: #475569; }
+  .dept-count { font-weight: 600; color: #334155; }
+  .dept-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dept-bar-bg {
+    width: 60px;
+    height: 5px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .dept-bar-fill { height: 100%; border-radius: 3px; }
+
+  @media (max-width: 700px) {
+    .pie-section { flex-direction: column; align-items: center; }
+    .pie-card { min-width: 100%; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="total-header">
+    <h1>全公司总人数</h1>
+    <div class="big-num">534 人</div>
+    <div class="sub">投研交 194 + 后台 164 + 销售 100 + 中台 62 + 管委会 14</div>
+  </div>
+
+  <div class="pie-section">
+    <div class="pie-card">
+      <h3>各条线人数分布</h3>
+      <div class="hint">点击扇区查看该条线内部结构</div>
+      <svg id="pieLeft" width="340" height="280" viewBox="0 0 340 280"></svg>
+    </div>
+    <div class="pie-card">
+      <h3 id="rightTitle">投研交条线 — 部门分布</h3>
+      <div class="hint" id="rightHint">194人</div>
+      <svg id="pieRight" width="340" height="280" viewBox="0 0 340 280"></svg>
+    </div>
+  </div>
+
+  <div id="linesContainer"></div>
+</div>
+
+<script>
+const palette = {
+  '投研交条线': { main: '#3B82F6', shades: ['#1E3A5F','#1E40AF','#2563EB','#3B82F6','#60A5FA','#93C5FD','#BFDBFE','#DBEAFE','#EFF6FF'] },
+  '后台条线':   { main: '#10B981', shades: ['#064E3B','#065F46','#059669','#10B981','#34D399','#6EE7B7','#A7F3D0','#D1FAE5','#ECFDF5'] },
+  '销售条线':   { main: '#F59E0B', shades: ['#78350F','#92400E','#B45309','#F59E0B','#FBBF24','#FCD34D','#FDE68A','#FEF3C7','#FFFBEB'] },
+  '中台条线':   { main: '#EC4899', shades: ['#831843','#9D174D','#BE185D','#EC4899','#F472B6','#F9A8D4','#FBCFE8','#FCE7F3','#FDF2F8'] },
+  '管委会':     { main: '#64748B', shades: ['#0F172A','#1E293B','#334155','#64748B','#94A3B8','#CBD5E1','#E2E8F0','#F1F5F9','#F8FAFC'] }
+};
+
+const abbrevMap = {
+  '权益公募投资部': '权益公募',
+  '权益专户投资部': '权益专户',
+  '权益研究部': '权益研究',
+  '基础研究部': '基础研究',
+  '量化投资部': '量化投资',
+  '固收投资部': '固收投资',
+  '多资产投资部': '多资产',
+  '信用研究部': '信用研究',
+  '交易室': '交易室',
+  '机构业务部': '机构业务',
+  '零售业务部': '零售业务',
+  '互联网渠道部': '互联网渠道',
+  '战略规划及业务发展部': '战略规划',
+  '品牌营销部': '品牌营销',
+  '数据营销部': '数据营销',
+  '理财规划部': '理财规划',
+  '基金运营': '基金运营',
+  '信息技术': '信息技术',
+  '管委会': '管委会',
+  '风控': '风控',
+  '稽核': '稽核',
+  '人力': '人力',
+  '财务': '财务',
+  '行政': '行政'
+};
+
+function abbrev(name) { return abbrevMap[name] || name; }
+
+const data = {
+  '投研交条线': { depts: {'权益研究部':41,'交易室':30,'多资产投资部':27,'固收投资部':26,'权益公募投资部':23,'量化投资部':16,'信用研究部':15,'基础研究部':12,'权益专户投资部':4} },
+  '后台条线':   { depts: {'信息技术':79,'基金运营':32,'风控':16,'稽核':11,'人力':9,'财务':9,'行政':8} },
+  '销售条线':   { depts: {'零售业务部':49,'机构业务部':37,'互联网渠道部':14} },
+  '中台条线':   { depts: {'战略规划及业务发展部':29,'品牌营销部':14,'理财规划部':10,'数据营销部':9} },
+  '管委会':     { depts: {'管委会':14} }
+};
+
+const total = 534;
+const lineOrder = ['投研交条线','后台条线','销售条线','中台条线','管委会'];
+let activeLine = '投研交条线';
+
+function getSlices(items, totalVal) {
+  let start = -Math.PI / 2;
+  const result = [];
+  items.forEach(([name, val]) => {
+    const angle = (val / totalVal) * 2 * Math.PI;
+    const end = start + angle;
+    const mid = start + angle / 2;
+    result.push({ name, val, start, end, mid, angle, pct: (val / totalVal * 100).toFixed(1) });
+    start = end;
+  });
+  return result;
+}
+
+function drawPie(svgId, slices, colorKey, cx, cy, r, isLine) {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = '';
+
+  slices.forEach((s, i) => {
+    const x1 = cx + r * Math.cos(s.start);
+    const y1 = cy + r * Math.sin(s.start);
+    const x2 = cx + r * Math.cos(s.end);
+    const y2 = cy + r * Math.sin(s.end);
+    const la = s.angle > Math.PI ? 1 : 0;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2} Z`);
+    const fill = isLine ? palette[s.name].main : palette[colorKey].shades[i % 9];
+    path.setAttribute('fill', fill);
+    path.setAttribute('stroke', '#fff');
+    path.setAttribute('stroke-width', '2.5');
+    path.style.cursor = isLine ? 'pointer' : 'default';
+    if (isLine) {
+      path.onclick = () => selectLine(s.name);
+      path.onmouseenter = () => path.setAttribute('opacity', '0.8');
+      path.onmouseleave = () => path.setAttribute('opacity', '1');
+    }
+    svg.appendChild(path);
+
+    if (s.angle > 0.15) {
+      const lr = r * 0.58;
+      const lx = cx + lr * Math.cos(s.mid);
+      const ly = cy + lr * Math.sin(s.mid);
+      const short = abbrev(s.name);
+
+      const t1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t1.setAttribute('x', lx);
+      t1.setAttribute('y', ly - 4);
+      t1.setAttribute('text-anchor', 'middle');
+      t1.setAttribute('dominant-baseline', 'middle');
+      t1.setAttribute('font-size', '8');
+      t1.setAttribute('font-weight', '700');
+      t1.setAttribute('fill', '#fff');
+      t1.textContent = short;
+      svg.appendChild(t1);
+
+      const t2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t2.setAttribute('x', lx);
+      t2.setAttribute('y', ly + 5);
+      t2.setAttribute('text-anchor', 'middle');
+      t2.setAttribute('dominant-baseline', 'middle');
+      t2.setAttribute('font-size', '7');
+      t2.setAttribute('fill', 'rgba(255,255,255,0.95)');
+      t2.textContent = `${s.val}人 ${s.pct}%`;
+      svg.appendChild(t2);
+    } else {
+      const lr = r + 20;
+      const lx = cx + lr * Math.cos(s.mid);
+      const ly = cy + lr * Math.sin(s.mid);
+      const anc = Math.cos(s.mid) > 0 ? 'start' : 'end';
+      const tx = cx + (r + 4) * Math.cos(s.mid);
+      const ty = cy + (r + 4) * Math.sin(s.mid);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', tx);
+      line.setAttribute('y1', ty);
+      line.setAttribute('x2', lx + (anc === 'start' ? 3 : -3));
+      line.setAttribute('y2', ly);
+      line.setAttribute('stroke', '#cbd5e0');
+      line.setAttribute('stroke-width', '0.8');
+      svg.appendChild(line);
+
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', lx + (anc === 'start' ? 5 : -5));
+      t.setAttribute('y', ly + 1);
+      t.setAttribute('text-anchor', anc);
+      t.setAttribute('font-size', '8');
+      t.setAttribute('fill', '#64748b');
+      t.textContent = `${abbrev(s.name)} ${s.val}人`;
+      svg.appendChild(t);
+    }
+  });
+}
+
+function renderLeft() {
+  const items = lineOrder.map(l => [l, Object.values(data[l].depts).reduce((a, b) => a + b, 0)]);
+  const slices = getSlices(items, total);
+  drawPie('pieLeft', slices, null, 170, 140, 100, true);
+}
+
+function renderRight() {
+  const items = Object.entries(data[activeLine].depts).sort((a, b) => b[1] - a[1]);
+  const lt = items.reduce((a, [, b]) => a + b, 0);
+  const slices = getSlices(items, lt);
+  document.getElementById('rightTitle').textContent = `${activeLine} — 部门分布`;
+  document.getElementById('rightHint').textContent = `${lt}人`;
+  drawPie('pieRight', slices, activeLine, 170, 140, 100, false);
+}
+
+function selectLine(line) {
+  activeLine = line;
+  renderLeft();
+  renderRight();
+}
+
+function renderLines() {
+  const c = document.getElementById('linesContainer');
+  lineOrder.forEach((line, idx) => {
+    const depts = data[line].depts;
+    const count = Object.values(depts).reduce((a, b) => a + b, 0);
+    const pct = (count / total * 100).toFixed(1);
+    const maxDept = Math.max(...Object.values(depts));
+    const card = document.createElement('div');
+    card.className = 'line-card';
+    card.innerHTML = `
+      <div class="line-header" onclick="toggleLine(${idx})">
+        <div class="line-left">
+          <div class="line-color" style="background:${palette[line].main}"></div>
+          <div class="line-name">${line}</div>
+        </div>
+        <div style="display:flex;align-items:center">
+          <span class="line-count">${count}人</span>
+          <span class="line-pct">${pct}%</span>
+          <span class="arrow" id="arrow${idx}">▶</span>
+        </div>
+      </div>
+      <div class="line-bar-bg"><div class="line-bar-fill" style="width:${pct}%;background:${palette[line].main}"></div></div>
+      <div class="dept-list" id="deptList${idx}">
+        ${Object.entries(depts).sort((a, b) => b[1] - a[1]).map(([d, v]) => {
+          const bw = (v / maxDept * 55).toFixed(0);
+          return `<div class="dept-item">
+            <span class="dept-name">${d}</span>
+            <div class="dept-bar-wrap">
+              <div class="dept-bar-bg"><div class="dept-bar-fill" style="width:${bw}px;background:${palette[line].main};opacity:0.55"></div></div>
+              <span class="dept-count">${v}人</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    c.appendChild(card);
+  });
+}
+
+function toggleLine(idx) {
+  const list = document.getElementById(`deptList${idx}`);
+  const arrow = document.getElementById(`arrow${idx}`);
+  list.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+renderLeft();
+renderRight();
+renderLines();
+setTimeout(() => { toggleLine(0); toggleLine(1); }, 100);
+</script>
+</body>
+</html>
