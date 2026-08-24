@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI提效工作台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e8eef5 100%);
+    min-height: 100vh;
+    color: #1e293b;
+  }
+  .header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .header h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 2px;
+  }
+  .header p {
+    font-size: 16px;
+    color: rgba(255,255,255,0.85);
+    margin-top: 12px;
+  }
+  .search-box {
+    max-width: 600px;
+    margin: -25px auto 40px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 2;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 16px 24px 16px 52px;
+    border: none;
+    border-radius: 16px;
+    font-size: 15px;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    outline: none;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  }
+  .card-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.6;
+  }
+  .card-arrow {
+    font-size: 20px;
+    color: #cbd5e1;
+    margin-left: auto;
+  }
+  .empty {
+    text-align: center;
+    padding: 80px;
+    color: #94a3b8;
+    grid-column: 1 / -1;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>AI提效工作台</h1>
+  <p>聚焦业务深层痛点，依托 AI 赋能提质增效</p>
+</div>
+
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="搜索应用名称或功能描述..." oninput="filterCards()">
+</div>
+
+<div class="container">
+  <div class="grid" id="cardGrid"></div>
+</div>
+
+<script>
+// ========== 在这里添加/修改你的应用卡片 ==========
+const apps = [
+  {
+    title: '组织架构图',
+    desc: '公司534人组织架构双饼图联动展示',
+    icon: '📊',
+    color: '#3B82F6',
+    url: 'https://theseeyouapril.github.io/my-tools/'
+  },
+  {
+    title: 'QDII限额宝',
+    desc: '一键查询QDII基金限额信息',
+    icon: '📈',
+    color: '#10B981',
+    url: 'https://example.com/qdii'
+  },
+  {
+    title: '基金池业绩跟踪看板',
+    desc: '动态追踪基金池内产品业绩走势',
+    icon: '📉',
+    color: '#F59E0B',
+    url: 'https://example.com/fund'
+  },
+  {
+    title: '高端产品开放日历',
+    desc: '一键查询产品申赎状态与天数',
+    icon: '📅',
+    color: '#EC4899',
+    url: 'https://example.com/calendar'
+  }
+];
+// ==================================================
+
+function renderCards(list) {
+  const grid = document.getElementById('cardGrid');
+  if (list.length === 0) {
+    grid.innerHTML = '<div class="empty">🔍 没有找到匹配的应用</div>';
+    return;
+  }
+  grid.innerHTML = list.map(app => `
+    <a class="card" href="${app.url}" target="_blank" rel="noopener">
+      <div class="card-icon" style="background: ${app.color}15;">${app.icon}</div>
+      <div>
+        <div class="card-title">${app.title}</div>
+        <div class="card-desc">${app.desc}</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+  `).join('');
+}
+
+function filterCards() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const filtered = apps.filter(app => 
+    app.title.toLowerCase().includes(q) || 
+    app.desc.toLowerCase().includes(q)
+  );
+  renderCards(filtered);
+}
+
+renderCards(apps);
+</script>
+
+</body>
+</html>
